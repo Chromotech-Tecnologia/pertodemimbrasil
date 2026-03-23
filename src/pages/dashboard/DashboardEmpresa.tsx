@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { ImageUpload } from '@/components/ImageUpload';
 import { categories } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { Save } from 'lucide-react';
@@ -26,12 +27,21 @@ export default function DashboardEmpresa() {
     address: '',
     instagram: '',
     facebook: '',
+    logoUrl: user?.logoUrl || '',
+    coverUrl: user?.coverUrl || '',
   });
 
   const update = (field: string, value: string) => setForm(f => ({ ...f, [field]: value }));
 
   const handleSave = () => {
-    updateUser({ companyName: form.companyName, category: form.category, city: form.city, phone: form.phone });
+    updateUser({
+      companyName: form.companyName,
+      category: form.category,
+      city: form.city,
+      phone: form.phone,
+      logoUrl: form.logoUrl,
+      coverUrl: form.coverUrl,
+    });
     toast({ title: 'Salvo!', description: 'Dados da empresa atualizados.' });
   };
 
@@ -42,6 +52,34 @@ export default function DashboardEmpresa() {
           <h1 className="text-2xl font-extrabold">Minha Empresa</h1>
           <Button onClick={handleSave} className="font-semibold"><Save className="mr-2 h-4 w-4" /> Salvar</Button>
         </div>
+
+        <Card>
+          <CardHeader><CardTitle>Logotipo e Imagem de Capa</CardTitle></CardHeader>
+          <CardContent className="grid gap-6 sm:grid-cols-2">
+            <div>
+              <Label className="mb-2 block">Logotipo da Empresa</Label>
+              <ImageUpload
+                value={form.logoUrl}
+                onChange={url => update('logoUrl', url)}
+                onRemove={() => update('logoUrl', '')}
+                label="Upload do logotipo"
+                aspectRatio="square"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">Recomendado: 256x256px, PNG ou JPG</p>
+            </div>
+            <div>
+              <Label className="mb-2 block">Imagem de Capa (fundo do card)</Label>
+              <ImageUpload
+                value={form.coverUrl}
+                onChange={url => update('coverUrl', url)}
+                onRemove={() => update('coverUrl', '')}
+                label="Upload da imagem de capa"
+                aspectRatio="wide"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">Recomendado: 800x400px, JPG</p>
+            </div>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader><CardTitle>Informações Básicas</CardTitle></CardHeader>
