@@ -4,18 +4,29 @@ import { Search } from 'lucide-react';
 import { Layout } from '@/components/Layout';
 import { Input } from '@/components/ui/input';
 import { mockClassifieds, categories } from '@/lib/mock-data';
+import { useDataStore } from '@/lib/data-store';
 
 export default function Classificados() {
+  const { getAllClassifiedsAsClassified } = useDataStore();
+  const realClassifieds = getAllClassifiedsAsClassified();
+  const allClassifieds = useMemo(() => [...realClassifieds, ...mockClassifieds], [realClassifieds]);
+
   const [query, setQuery] = useState('');
   const [catFilter, setCatFilter] = useState('');
 
   const filtered = useMemo(() => {
-    let list = [...mockClassifieds];
+    let list = [...allClassifieds];
     if (query) list = list.filter(c => c.title.toLowerCase().includes(query.toLowerCase()));
     if (catFilter) list = list.filter(c => c.category === catFilter);
-    list.sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0));
+    // Real classifieds first, then featured mock
+    list.sort((a, b) => {
+      const aReal = realClassifieds.some(r => r.id === a.id) ? 0 : 1;
+      const bReal = realClassifieds.some(r => r.id === b.id) ? 0 : 1;
+      if (aReal !== bReal) return aReal - bReal;
+      return (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0);
+    });
     return list;
-  }, [query, catFilter]);
+  }, [query, catFilter, allClassifieds, realClassifieds]);
 
   return (
     <Layout>
