@@ -15,6 +15,8 @@ export interface User {
   trialEndsAt?: string;
   createdAt: string;
   avatarUrl?: string;
+  logoUrl?: string;
+  coverUrl?: string;
 }
 
 interface AuthContextType {
