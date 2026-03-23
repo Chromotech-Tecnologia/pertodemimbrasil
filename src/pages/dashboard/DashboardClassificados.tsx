@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/lib/auth-context';
+import { useDataStore } from '@/lib/data-store';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,32 +13,42 @@ import { Plus, Pencil, Trash2, FileText } from 'lucide-react';
 import { categories } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 
-interface LocalClassified {
-  id: string; title: string; description: string; price: string; category: string; city: string; status: 'active' | 'paused';
-  coverUrl: string; gallery: string[];
-}
-
 export default function DashboardClassificados() {
-  const [items, setItems] = useState<LocalClassified[]>([]);
+  const { user } = useAuth();
+  const { getClassifiedsByUserId, saveClassified, updateClassified, deleteClassified } = useDataStore();
+  const items = user ? getClassifiedsByUserId(user.id) : [];
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ title: '', description: '', price: '', category: '', city: '', coverUrl: '', gallery: [] as string[] });
   const { toast } = useToast();
 
   const handleCreate = () => {
-    if (!form.title || !form.category) return;
-    setItems(prev => [...prev, { ...form, id: `cl-${Date.now()}`, status: 'active' }]);
+    if (!form.title || !form.category || !user) return;
+    saveClassified({
+      id: `cl-${Date.now()}`,
+      userId: user.id,
+      title: form.title,
+      description: form.description,
+      price: form.price,
+      category: form.category,
+      city: form.city || user.city,
+      coverUrl: form.coverUrl,
+      gallery: form.gallery,
+      status: 'active',
+      createdAt: new Date().toISOString().split('T')[0],
+    });
     setForm({ title: '', description: '', price: '', category: '', city: '', coverUrl: '', gallery: [] });
     setOpen(false);
-    toast({ title: 'Classificado criado!' });
+    toast({ title: 'Classificado criado e visível no site!' });
   };
 
   const handleDelete = (id: string) => {
-    setItems(prev => prev.filter(i => i.id !== id));
+    deleteClassified(id);
     toast({ title: 'Classificado excluído.' });
   };
 
   const toggleStatus = (id: string) => {
-    setItems(prev => prev.map(i => i.id === id ? { ...i, status: i.status === 'active' ? 'paused' : 'active' } : i));
+    const item = items.find(i => i.id === id);
+    if (item) updateClassified(id, { status: item.status === 'active' ? 'paused' : 'active' });
   };
 
   return (
@@ -64,7 +76,6 @@ export default function DashboardClassificados() {
                   </div>
                 </div>
                 <div><Label>Cidade</Label><Input value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} /></div>
-
                 <div>
                   <Label className="mb-2 block">Foto de Capa</Label>
                   <ImageUpload
@@ -75,7 +86,6 @@ export default function DashboardClassificados() {
                     aspectRatio="wide"
                   />
                 </div>
-
                 <div>
                   <Label className="mb-2 block">Galeria de Fotos</Label>
                   <MultiImageUpload
@@ -85,7 +95,6 @@ export default function DashboardClassificados() {
                     label="Adicionar"
                   />
                 </div>
-
                 <Button className="w-full font-bold" onClick={handleCreate}>Publicar</Button>
               </div>
             </DialogContent>

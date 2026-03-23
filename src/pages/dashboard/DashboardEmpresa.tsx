@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useAuth } from '@/lib/auth-context';
+import { useDataStore } from '@/lib/data-store';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,27 +14,33 @@ import { Save } from 'lucide-react';
 
 export default function DashboardEmpresa() {
   const { user, updateUser } = useAuth();
+  const { saveCompany, getCompanyByUserId } = useDataStore();
   const { toast } = useToast();
+
+  const existing = user ? getCompanyByUserId(user.id) : undefined;
+
   const [form, setForm] = useState({
-    companyName: user?.companyName || '',
-    category: user?.category || '',
-    city: user?.city || '',
-    phone: user?.phone || '',
-    email: user?.email || '',
-    shortDescription: '',
-    fullDescription: '',
-    whatsapp: '',
-    website: '',
-    address: '',
-    instagram: '',
-    facebook: '',
-    logoUrl: user?.logoUrl || '',
-    coverUrl: user?.coverUrl || '',
+    companyName: existing?.name || user?.companyName || '',
+    category: existing?.category || user?.category || '',
+    city: existing?.city || user?.city || '',
+    state: existing?.state || '',
+    phone: existing?.phone || user?.phone || '',
+    email: existing?.email || user?.email || '',
+    shortDescription: existing?.shortDescription || '',
+    fullDescription: existing?.fullDescription || '',
+    whatsapp: existing?.whatsapp || '',
+    website: existing?.website || '',
+    address: existing?.address || '',
+    instagram: existing?.instagram || '',
+    facebook: existing?.facebook || '',
+    logoUrl: existing?.logoUrl || user?.logoUrl || '',
+    coverUrl: existing?.coverUrl || user?.coverUrl || '',
   });
 
   const update = (field: string, value: string) => setForm(f => ({ ...f, [field]: value }));
 
   const handleSave = () => {
+    if (!user) return;
     updateUser({
       companyName: form.companyName,
       category: form.category,
@@ -42,7 +49,28 @@ export default function DashboardEmpresa() {
       logoUrl: form.logoUrl,
       coverUrl: form.coverUrl,
     });
-    toast({ title: 'Salvo!', description: 'Dados da empresa atualizados.' });
+    saveCompany({
+      userId: user.id,
+      slug: '',
+      name: form.companyName,
+      category: form.category,
+      city: form.city,
+      state: form.state,
+      phone: form.phone,
+      email: form.email,
+      whatsapp: form.whatsapp,
+      website: form.website,
+      address: form.address,
+      shortDescription: form.shortDescription,
+      fullDescription: form.fullDescription,
+      instagram: form.instagram,
+      facebook: form.facebook,
+      logoUrl: form.logoUrl,
+      coverUrl: form.coverUrl,
+      plan: user.plan,
+      createdAt: user.createdAt,
+    });
+    toast({ title: 'Salvo!', description: 'Dados da empresa atualizados e visíveis no site.' });
   };
 
   return (
@@ -104,7 +132,8 @@ export default function DashboardEmpresa() {
             <div><Label>Email</Label><Input type="email" value={form.email} onChange={e => update('email', e.target.value)} /></div>
             <div><Label>Website</Label><Input value={form.website} onChange={e => update('website', e.target.value)} placeholder="https://..." /></div>
             <div><Label>Cidade</Label><Input value={form.city} onChange={e => update('city', e.target.value)} /></div>
-            <div><Label>Endereço</Label><Input value={form.address} onChange={e => update('address', e.target.value)} placeholder="Rua, número, bairro" /></div>
+            <div><Label>Estado</Label><Input value={form.state} onChange={e => update('state', e.target.value)} placeholder="SP" /></div>
+            <div className="sm:col-span-2"><Label>Endereço</Label><Input value={form.address} onChange={e => update('address', e.target.value)} placeholder="Rua, número, bairro" /></div>
           </CardContent>
         </Card>
 

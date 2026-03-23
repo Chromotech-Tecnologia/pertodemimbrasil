@@ -6,21 +6,26 @@ import { PlanBadge } from '@/components/PlanBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { mockCompanies, categories } from '@/lib/mock-data';
+import { useDataStore } from '@/lib/data-store';
 
 export default function Empresas() {
+  const { getAllCompaniesAsCompany } = useDataStore();
+  const realCompanies = getAllCompaniesAsCompany();
+  const allCompanies = useMemo(() => [...realCompanies, ...mockCompanies], [realCompanies]);
+
   const [query, setQuery] = useState('');
   const [catFilter, setCatFilter] = useState('');
   const [page, setPage] = useState(1);
   const perPage = 9;
 
   const filtered = useMemo(() => {
-    let list = [...mockCompanies];
+    let list = [...allCompanies];
     if (query) list = list.filter(c => c.name.toLowerCase().includes(query.toLowerCase()));
     if (catFilter) list = list.filter(c => c.category === catFilter);
     const order: Record<string, number> = { premium: 0, pro: 1, smart: 2 };
     list.sort((a, b) => order[a.plan] - order[b.plan]);
     return list;
-  }, [query, catFilter]);
+  }, [query, catFilter, allCompanies]);
 
   const pages = Math.ceil(filtered.length / perPage);
   const visible = filtered.slice((page - 1) * perPage, page * perPage);
@@ -56,14 +61,17 @@ export default function Empresas() {
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {visible.map(c => (
                 <Link key={c.id} to={`/empresa/${c.slug}`} className="card-hover overflow-hidden rounded-xl border border-border/50 bg-card">
+                  {c.coverUrl && (
+                    <div className="h-32 w-full bg-cover bg-center" style={{ backgroundImage: `url(${c.coverUrl})` }} />
+                  )}
                   <div className="flex items-start gap-3 p-4">
-                    <img src={c.logoUrl} alt={c.name} className="h-14 w-14 rounded-lg" />
+                    <img src={c.logoUrl} alt={c.name} className="h-14 w-14 rounded-lg object-cover" />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <h3 className="truncate font-bold text-sm">{c.name}</h3>
                         <PlanBadge plan={c.plan} />
                       </div>
-                      <p className="text-xs text-muted-foreground">{c.category} · {c.city}, {c.state}</p>
+                      <p className="text-xs text-muted-foreground">{c.category} · {c.city}{c.state ? `, ${c.state}` : ''}</p>
                       <div className="mt-1 flex items-center gap-1">
                         <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                         <span className="text-xs font-semibold tabular-nums">{c.rating}</span>
