@@ -6,6 +6,7 @@ import { PlanBadge } from '@/components/PlanBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { categories, mockCompanies, mockClassifieds, testimonials } from '@/lib/mock-data';
+import { useDataStore } from '@/lib/data-store';
 
 function HeroSection() {
   const [query, setQuery] = useState('');
@@ -77,7 +78,11 @@ function CategoriesSection() {
 }
 
 function FeaturedCompanies() {
-  const featured = mockCompanies.filter(c => c.plan === 'premium').slice(0, 6);
+  const { getAllCompaniesAsCompany } = useDataStore();
+  const realCompanies = getAllCompaniesAsCompany();
+  const allCompanies = [...realCompanies, ...mockCompanies];
+  const featured = allCompanies.filter(c => c.plan === 'premium').slice(0, 6);
+
   return (
     <section className="border-t border-border/30 bg-card/50 py-16 sm:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
@@ -86,13 +91,13 @@ function FeaturedCompanies() {
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {featured.map(c => (
             <Link key={c.id} to={`/empresa/${c.slug}`} className="card-hover group overflow-hidden rounded-xl border border-primary/20 bg-card shadow-md">
-              <div className="relative h-40 bg-gradient-to-br from-primary/20 to-primary/5">
+              <div className="relative h-40 bg-gradient-to-br from-primary/20 to-primary/5" style={c.coverUrl ? { backgroundImage: `url(${c.coverUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}>
                 <div className="absolute right-3 top-3"><PlanBadge plan="premium" /></div>
-                <img src={c.logoUrl} alt={c.name} className="absolute -bottom-6 left-4 h-16 w-16 rounded-xl border-2 border-card shadow-lg" />
+                <img src={c.logoUrl} alt={c.name} className="absolute -bottom-6 left-4 h-16 w-16 rounded-xl border-2 border-card shadow-lg object-cover" />
               </div>
               <div className="px-4 pb-4 pt-8">
                 <h3 className="font-bold text-foreground">{c.name}</h3>
-                <p className="text-xs text-muted-foreground">{c.category} · {c.city}, {c.state}</p>
+                <p className="text-xs text-muted-foreground">{c.category} · {c.city}{c.state ? `, ${c.state}` : ''}</p>
                 <div className="mt-1 flex items-center gap-1">
                   <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
                   <span className="text-xs font-semibold tabular-nums">{c.rating}</span>
@@ -119,7 +124,11 @@ function FeaturedCompanies() {
 }
 
 function ClassifiedsSection() {
-  const featured = mockClassifieds.filter(c => c.isFeatured).slice(0, 4);
+  const { getAllClassifiedsAsClassified } = useDataStore();
+  const realClassifieds = getAllClassifiedsAsClassified();
+  const allClassifieds = [...realClassifieds, ...mockClassifieds];
+  const featured = allClassifieds.filter(c => c.isFeatured || realClassifieds.some(r => r.id === c.id)).slice(0, 4);
+
   return (
     <section className="py-16 sm:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
